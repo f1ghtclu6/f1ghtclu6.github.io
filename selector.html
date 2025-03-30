@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Character Selector</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
+    <style>
+        body { background-color: #111; color: white; text-align: center; font-family: Arial, sans-serif; }
+        canvas { display: block; margin: auto; }
+        .character-list { display: flex; justify-content: center; gap: 20px; margin-top: 20px; }
+        .character { padding: 10px; cursor: pointer; border: 2px solid transparent; transition: 0.3s; }
+        .character.selected { border-color: yellow; }
+    </style>
+</head>
+<body>
+    <h1>Select Your Fighter</h1>
+    <div class="character-list" id="character-list"></div>
+    <div id="canvas-container" style="width: 100vw; height: 500px;"></div>
+    <button onclick="resetSelection()" style="margin-top: 20px; padding: 10px;">Reset</button>
+    
+    <script>
+        const characters = [
+            { name: "Ryu", model: "models/ryu.glb" },
+            { name: "Ken", model: "models/ken.glb" },
+            { name: "Chun-Li", model: "models/chunli.glb" },
+            { name: "Akuma", model: "models/akuma.glb" }
+        ];
+        
+        let scene, camera, renderer, loader, currentModel;
+        const container = document.getElementById("canvas-container");
+        
+        function initScene() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+            camera.position.set(0, 2, 5);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+            
+            const light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(2, 2, 2);
+            scene.add(light);
+            
+            loader = new THREE.GLTFLoader();
+            animate();
+        }
+        
+        function loadCharacter(modelPath) {
+            if (currentModel) scene.remove(currentModel);
+            
+            loader.load(modelPath, (gltf) => {
+                currentModel = gltf.scene;
+                currentModel.scale.set(2, 2, 2);
+                scene.add(currentModel);
+            });
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            if (currentModel) currentModel.rotation.y += 0.01;
+            renderer.render(scene, camera);
+        }
+        
+        function createCharacterButtons() {
+            const characterList = document.getElementById("character-list");
+            characters.forEach(char => {
+                const btn = document.createElement("div");
+                btn.textContent = char.name;
+                btn.classList.add("character");
+                btn.onclick = () => {
+                    document.querySelectorAll(".character").forEach(el => el.classList.remove("selected"));
+                    btn.classList.add("selected");
+                    loadCharacter(char.model);
+                };
+                characterList.appendChild(btn);
+            });
+        }
+        
+        function resetSelection() {
+            if (currentModel) scene.remove(currentModel);
+            document.querySelectorAll(".character").forEach(el => el.classList.remove("selected"));
+        }
+        
+        initScene();
+        createCharacterButtons();
+    </script>
+</body>
+</html>
