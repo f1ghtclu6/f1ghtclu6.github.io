@@ -23,10 +23,10 @@
     
     <script>
         const characters = [
-            { name: "Ryu", model: "models/ryu.glb", thumb: "thumbnails/ryu.jpg" },
-            { name: "SubZero", model: "models/subzero.glb", thumb: "thumbnails/subzero.jpg" },
-            { name: "Chun-Li", model: "models/chun_li_model.glb", thumb: "thumbnails/chunli.jpg" },
-            { name: "Akuma", model: "models/akuma1.glb", thumb: "thumbnails/akuma.jpg" }
+            { name: "Ryu", model: "models/ryu.glb", texture: "textures/ryu_texture.jpg", thumb: "thumbnails/ryu.jpg" },
+            { name: "SubZero", model: "models/subzero.glb", texture: "textures/subzero_texture.jpg", thumb: "thumbnails/subzero.jpg" },
+            { name: "Chun-Li", model: "models/chun_li_model.glb", texture: "textures/chunli_texture.jpg", thumb: "thumbnails/chunli.jpg" },
+            { name: "Akuma", model: "models/akuma1.glb", texture: "textures/akuma_texture.jpg", thumb: "thumbnails/akuma.jpg" }
         ];
         
         let scene, camera, renderer, loader, currentModel;
@@ -57,17 +57,18 @@
             animate();
         }
         
-        function loadCharacter(modelPath) {
+        function loadCharacter(character) {
             if (currentModel) scene.remove(currentModel);
             
-            loader.load(modelPath, (gltf) => {
+            loader.load(character.model, (gltf) => {
                 currentModel = gltf.scene;
                 currentModel.scale.set(2, 2, 2);
                 
-                // Ensure textures update
-                currentModel.traverse((child) => {
-                    if (child.isMesh && child.material) {
-                        child.material.needsUpdate = true;
+                const texture = new THREE.TextureLoader().load(character.texture);
+                gltf.scene.traverse((object) => {            
+                    if (object instanceof THREE.Mesh) { 
+                        object.material.map = texture;
+                        object.material.needsUpdate = true;
                     }
                 });
                 
@@ -97,7 +98,7 @@
                 btn.onclick = () => {
                     document.querySelectorAll(".character").forEach(el => el.classList.remove("selected"));
                     btn.classList.add("selected");
-                    loadCharacter(char.model);
+                    loadCharacter(char);
                 };
                 characterList.appendChild(btn);
             });
