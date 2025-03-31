@@ -10,7 +10,8 @@
         body { background-color: #111; color: white; text-align: center; font-family: Arial, sans-serif; }
         canvas { display: block; margin: auto; }
         .character-list { display: flex; justify-content: center; gap: 20px; margin-top: 20px; }
-        .character { padding: 10px; cursor: pointer; border: 2px solid transparent; transition: 0.3s; }
+        .character { cursor: pointer; border: 2px solid transparent; transition: 0.3s; }
+        .character img { width: 80px; height: 80px; display: block; border-radius: 10px; }
         .character.selected { border-color: yellow; }
     </style>
 </head>
@@ -22,10 +23,10 @@
     
     <script>
         const characters = [
-            { name: "Ryu", model: "models/ryu.glb" },
-            { name: "SubZero", model: "models/subzero.glb" },
-            { name: "Chun-Li", model: "models/chun_li_model.glb" },
-            { name: "Akuma", model: "models/akuma1.glb" }
+            { name: "Ryu", model: "models/ryu.glb", thumb: "thumbnails/ryu.jpg" },
+            { name: "SubZero", model: "models/subzero.glb", thumb: "thumbnails/subzero.jpg" },
+            { name: "Chun-Li", model: "models/chun_li_model.glb", thumb: "thumbnails/chunli.jpg" },
+            { name: "Akuma", model: "models/akuma1.glb", thumb: "thumbnails/akuma.jpg" }
         ];
         
         let scene, camera, renderer, loader, currentModel;
@@ -38,11 +39,17 @@
             
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
             container.appendChild(renderer.domElement);
             
             const light = new THREE.DirectionalLight(0xffffff, 1);
             light.position.set(2, 2, 2);
             scene.add(light);
+            
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
             
             loader = new THREE.GLTFLoader();
             animate();
@@ -68,8 +75,13 @@
             const characterList = document.getElementById("character-list");
             characters.forEach(char => {
                 const btn = document.createElement("div");
-                btn.textContent = char.name;
                 btn.classList.add("character");
+                
+                const img = document.createElement("img");
+                img.src = char.thumb;
+                img.alt = char.name;
+                btn.appendChild(img);
+                
                 btn.onclick = () => {
                     document.querySelectorAll(".character").forEach(el => el.classList.remove("selected"));
                     btn.classList.add("selected");
