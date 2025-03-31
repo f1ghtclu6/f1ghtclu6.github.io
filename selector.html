@@ -34,6 +34,8 @@
         
         function initScene() {
             scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x222222);
+            
             camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
             camera.position.set(0, 2, 5);
             
@@ -61,7 +63,17 @@
             loader.load(modelPath, (gltf) => {
                 currentModel = gltf.scene;
                 currentModel.scale.set(2, 2, 2);
+                
+                // Ensure textures update
+                currentModel.traverse((child) => {
+                    if (child.isMesh && child.material) {
+                        child.material.needsUpdate = true;
+                    }
+                });
+                
                 scene.add(currentModel);
+            }, undefined, (error) => {
+                console.error("Error loading model:", error);
             });
         }
         
