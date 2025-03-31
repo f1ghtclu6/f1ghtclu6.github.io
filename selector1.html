@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Character Selector</title>
+    <script type="module">
+        import * as THREE from '/three/build/three.module.js';
+        import { OrbitControls } from '/three/examples/jsm/controls/OrbitControls.js';
+        import { GLTFLoader } from '/three/examples/jsm/loaders/GLTFLoader.js';
+        import { RGBELoader } from '/three/examples/jsm/loaders/RGBELoader.js';
+        
+        let scene, camera, renderer, controls, loader;
+        let currentModel;
+        
+        const characters = [
+            { name: "Ryu", model: "models/ryu.glb" },
+            { name: "Ken", model: "models/ken.glb" },
+            { name: "Chun-Li", model: "models/chunli.glb" },
+            { name: "Akuma", model: "models/akuma.glb" }
+        ];
+        
+        function initScene() {
+            scene = new THREE.Scene();
+            
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.25, 20);
+            camera.position.set(-1.8, 0.6, 2.7);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            document.body.appendChild(renderer.domElement);
+            
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.minDistance = 2;
+            controls.maxDistance = 10;
+            controls.target.set(0, 0, -0.2);
+            controls.update();
+            
+            loader = new GLTFLoader();
+            
+            new RGBELoader()
+                .setDataType(THREE.UnsignedByteType)
+                .setPath('texture/')
+                .load('royal_esplanade_1k.hdr', function (texture) {
+                    let pmremGenerator = new THREE.PMREMGenerator(renderer);
+                    let envMap = pmremGenerator.fromEquirectangular(texture).texture;
+                    scene.background = envMap;
+                    scene.environment = envMap;
+                    texture.dispose();
+                    pmremGenerator.dispose();
+                    animate();
+                });
+        }
+        
+        function loadCharacter(modelPath) {
+            if (currentModel) scene.remove(currentModel);
+            
+            loader.load(modelPath, function (gltf) {
+                currentModel = gltf.scene;
+                currentModel.scale.set(2, 2, 2);
+                scene.add(currentModel);
+            });
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            if (currentModel) currentModel.rotation.y += 0.01;
+            renderer.render(scene, camera);
+        }
+        
+        function createCharacterButtons() {
+            const characterList = document.createElement("div");
+            characterList.style.display = "flex";
+            characterList.style.justifyContent = "center";
+            characterList.style.marginTop = "20px";
+            
+            characters.forEach(char => {
+                const btn = document.createElement("button");
+                btn.textContent = char.name;
+                btn.style.margin = "10px";
+                btn.style.padding = "10px";
+                btn.style.cursor = "pointer";
+                btn.onclick = () => loadCharacter(char.model);
+                characterList.appendChild(btn);
+            });
+            
+            document.body.appendChild(characterList);
+        }
+        
+        window.addEventListener('resize', function () {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        initScene();
+        createCharacterButtons();
+    </script>
+</head>
+<body>
+    <h1 style="text-align: center; color: white;">Select Your Fighter</h1>
+</body>
+</html>
